@@ -9,7 +9,7 @@ namespace MVC.Controllers
         {
             return View();
         } 
-        // GET: /HelloWodonetrld/Welcome/ 
+       
          public IActionResult Person()
         {
             return View();
@@ -18,6 +18,7 @@ namespace MVC.Controllers
         {
             return View();
         } 
+         // GET: /HelloWodonetrld/Welcome/ 
         public string Welcome()
         {
             return "This is the Welcome action method...";

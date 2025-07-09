@@ -18,10 +18,31 @@ namespace MvcMovie.Controllers
             var model = await _context.Person.ToListAsync();
             return View(model);
         }
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            return View();
+            var lastPerson = await _context.Person
+                .OrderByDescending(p => p.PersonId)
+                .FirstOrDefaultAsync();
+
+            string newId = "PS000";
+
+            if (lastPerson != null && !string.IsNullOrEmpty(lastPerson.PersonId))
+            {
+                var suffix = lastPerson.PersonId.Substring(2); // Lấy phần số
+                if (int.TryParse(suffix, out int num))
+                {
+                    newId = "PS" + (num + 1).ToString("D3");
+                }
+            }
+
+            var person = new Person
+            {
+                PersonId = newId
+            };
+
+            return View(person);
         }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("PersonId,FullName,Address")] Person person)

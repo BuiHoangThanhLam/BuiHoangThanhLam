@@ -9,6 +9,8 @@ public class Person
 {
     [Key]
     public string? PersonId { get; set; }
+    [Required(ErrorMessage = "Vui lòng nhập đầy đủ thông tin")]    
     public string? FullName { get; set; }
+    [Required(ErrorMessage = "Vui lòng nhập đầy đủ thông tin")]    
     public string? Address { get; set; }
 }

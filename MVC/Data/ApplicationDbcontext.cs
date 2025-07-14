@@ -7,6 +7,6 @@ namespace MvcMovie.Data
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         { }
-        public DbSet<Person> Person { get; set;}
+        public DbSet<Person> Person { get; set; } = null!;
     }
 }

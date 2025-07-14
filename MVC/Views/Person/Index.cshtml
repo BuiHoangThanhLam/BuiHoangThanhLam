@@ -1,4 +1,4 @@
-@model IEnumerable<MvcMovie.Models.Person>
+@model IEnumerable<MvcMovie.Models.Entities.Person>
 
 @{
     ViewData["Title"] = "Index";
@@ -23,32 +23,25 @@
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
-    <tr>
-        <td>
-            @Html.DisplayFor(model => item.PersonId)
-        </td>
-        <td>
-            @Html.DisplayFor(model => item.FullName)
-        </td>
-        <td>
-            @Html.DisplayFor(model => item.Address)
-        </td>
-        <td>
-            <a asp-action="Edit" asp-route-id="@item.PersonId">Edit</a> |
-            <a asp-action="Delete" asp-route-id="@item.PersonId">Delete</a>
-        </td>
-    </tr>
+    @foreach (var item in Model) 
+    {
+        <tr>
+            <td>
+                @Html.DisplayFor(model => item.PersonId)
+            </td>
+            <td>
+                @Html.DisplayFor(model => item.FullName)
+            </td>
+            <td>
+                @Html.DisplayFor(model => item.Address)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.PersonId">Edit</a> |
+                 <a asp-action="Details" asp-route-id="@item.PersonId">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.PersonId">Delete</a>
+            </td>
+        </tr>
 }
     </tbody>
 </table>
-<h1>Dữ liệu từ Controller gửi về là: @ViewBag.infoPerson</h1>
-<Form asp-action="Index">
-    <label>Nhập PersonID</label>
-    <input type="text" name="PersonId">
-    <label>Nhập họ tên:</label>
-    <input type="text" name="FullName">
-    <label>Nhập địa chỉ:</label>
-    <input type="text" name="Address">
-    <input type="submit" value="Gửi dữ liệu">
-</Form>
+

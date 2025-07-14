@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MvcMovie.Data;
 using MvcMovie.Models;
+using MvcMovie.Models.Entities;
+using MvcMovie.Models.Process;
 
 namespace MvcMovie.Controllers
 {
@@ -15,41 +17,66 @@ namespace MvcMovie.Controllers
         }
         public async Task<IActionResult> Index()
         {
-            var model = await _context.Person.ToListAsync();
-            return View(model);
-        }
-        public async Task<IActionResult> Create()
+             var model = await _context.Person
+        .Select(p => new MvcMovie.Models.Entities.Person
         {
-            var lastPerson = await _context.Person
-                .OrderByDescending(p => p.PersonId)
-                .FirstOrDefaultAsync();
+            PersonId = p.PersonId,
+            FullName = p.FullName,
+            Address = p.Address
+        }).ToListAsync();
 
-            string newId = "PS000";
-
-            if (lastPerson != null && !string.IsNullOrEmpty(lastPerson.PersonId))
+        return View(model); // truyền đúng kiểu mà View đang chờ
+        }
+        public async Task<IActionResult> Details(string id)
+        {
+            if (id == null)
             {
-                var suffix = lastPerson.PersonId.Substring(2); // Lấy phần số
-                if (int.TryParse(suffix, out int num))
-                {
-                    newId = "PS" + (num + 1).ToString("D3");
-                }
+                return NotFound();
             }
 
-            var person = new Person
+            var person = await _context.Person
+                .FirstOrDefaultAsync(m => m.PersonId == id);
+            if (person == null)
             {
-                PersonId = newId
+                return NotFound();
+            }
+
+            var entityPerson = new MvcMovie.Models.Entities.Person
+            {
+                PersonId = person.PersonId,
+                FullName = person.FullName,
+                Address = person.Address
             };
 
-            return View(person);
+            return View(entityPerson);
         }
-
+        public IActionResult Create()
+        {
+            AutoGenerateId autoGenerateId = new AutoGenerateId();
+            var person = _context.Person.OrderByDescending(p => p.PersonId).FirstOrDefault();
+            var personId = person == null ? "ST000" : person.PersonId;
+            var newPersonId = autoGenerateId.GenerateId(personId);
+            var newPerson = new MvcMovie.Models.Entities.Person
+            {
+                PersonId = newPersonId,
+                FullName = string.Empty,
+                Address = string.Empty
+            };
+            return View(newPerson);
+        }
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("PersonId,FullName,Address")] Person person)
+        public async Task<IActionResult> Create([Bind("PersonId,FullName,Address")] Models.Entities.Person person)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(person);
+                var newPerson = new MvcMovie.Models.Person
+                {
+                    PersonId = person.PersonId,
+                    FullName = person.FullName,
+                    Address = person.Address
+                };
+                _context.Add(newPerson);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
@@ -66,11 +93,19 @@ namespace MvcMovie.Controllers
             {
                 return NotFound();
             }
-            return View(person);
+             // Ánh xạ sang Entities.Person
+            var entityPerson = new MvcMovie.Models.Entities.Person
+            {
+                PersonId = person.PersonId,
+                FullName = person.FullName,
+                Address = person.Address
+            };
+
+            return View(entityPerson); 
         }
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(string id, [Bind("PersonId,FullName,Address")] Person person)
+        public async Task<IActionResult> Edit(string id, [Bind("PersonId,FullName,Address")] Models.Person person)
         {
             if (id != person.PersonId)
             {
@@ -80,7 +115,13 @@ namespace MvcMovie.Controllers
             {
                 try
                 {
-                    _context.Update(person);
+                     var updatedPerson = new MvcMovie.Models.Person
+                    {
+                        PersonId = person.PersonId,
+                        FullName = person.FullName,
+                        Address = person.Address
+                    };
+                    _context.Update(updatedPerson);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
@@ -110,7 +151,14 @@ namespace MvcMovie.Controllers
             {
                 return NotFound();
             }
-            return View(person);
+            var entityPerson = new MvcMovie.Models.Entities.Person
+            {
+                PersonId = person.PersonId,
+                FullName = person.FullName,
+                Address = person.Address
+            };
+
+            return View(entityPerson);
         }
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
@@ -133,11 +181,11 @@ namespace MvcMovie.Controllers
             return (_context.Person?.Any(e => e.PersonId == id)).GetValueOrDefault();
         } 
         [HttpPost]
-        public IActionResult Index(Person ps)
+        public IActionResult Index(Models.Person ps)
         {
             string strOutput = "Xin chao " + ps.PersonId + "-" + ps.FullName + "-" + ps.Address;
             ViewBag.infoPerson = strOutput;
             return View();
         }
     }
- }
+}

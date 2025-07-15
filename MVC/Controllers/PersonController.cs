@@ -42,7 +42,6 @@ namespace MvcMovie.Controllers
                     using (var stream = new FileStream(filePath, FileMode.Create))
                     {
                         await file.CopyToAsync(stream);
-                        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
                         // đọc dữ liệu từ file Excel và đổ vào DataTable
                         var dt = _excelProcess.ExcelToDataTable(fileLocation);
                         // sử dụng vòng lặp for để đọc dữ liệu từ dt
@@ -134,6 +133,32 @@ namespace MvcMovie.Controllers
             }
             return View(person);   
         }
+        public IActionResult Download()
+        {
+            // Name the file when downloading
+            var fileName = "YourFileName" + ".xlsx";
+            using(ExcelPackage excelPackage = new ExcelPackage())
+            {
+                ExcelWorksheet worksheet = excelPackage.Workbook.Worksheets.Add("Sheet 1");
+
+                // add some text to cell A1
+                worksheet.Cells["A1"].Value = "PersonID";
+                worksheet.Cells["B1"].Value = "FullName";
+                worksheet.Cells["C1"].Value = "Address";
+
+                // get all Person
+                var personList = _context.Person.ToList();
+
+                // fill data to worksheet
+                worksheet.Cells["A2"].LoadFromCollection(personList);
+
+                var stream = new MemoryStream(excelPackage.GetAsByteArray());
+
+                // download file
+                return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+            }
+        }
+
         public async Task<IActionResult> Edit(string id)
         {
             if (id == null || _context.Person == null)
@@ -145,7 +170,7 @@ namespace MvcMovie.Controllers
             {
                 return NotFound();
             }
-             // Ánh xạ sang Entities.Person
+            // Ánh xạ sang Entities.Person
             var entityPerson = new MvcMovie.Models.Entities.Person
             {
                 PersonId = person.PersonId,
@@ -153,7 +178,7 @@ namespace MvcMovie.Controllers
                 Address = person.Address
             };
 
-            return View(entityPerson); 
+            return View(entityPerson);
         }
         [HttpPost]
         [ValidateAntiForgeryToken]

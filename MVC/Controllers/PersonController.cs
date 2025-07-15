@@ -1,9 +1,11 @@
+using System.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MvcMovie.Data;
 using MvcMovie.Models;
 using MvcMovie.Models.Entities;
 using MvcMovie.Models.Process;
+using OfficeOpenXml;
 
 namespace MvcMovie.Controllers
 {
@@ -11,21 +13,71 @@ namespace MvcMovie.Controllers
     {
         private readonly ApplicationDbContext _context;
 
+        private ExcelProcess _excelProcess = new ExcelProcess();
+
         public PersonController(ApplicationDbContext context)
         {
             _context = context;
         }
+        public async Task<IActionResult> Upload()
+        {
+            return View();
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Upload(IFormFile file)
+        {
+            if (file != null)
+            {
+                string fileExtension = Path.GetExtension(file.FileName);
+                if (fileExtension != ".xls" && fileExtension != ".xlsx")
+                {
+                    ModelState.AddModelError("", "Please choose excel file to upload!");
+                }
+                else
+                {
+                    var fileName = DateTime.Now.ToShortTimeString() + fileExtension;
+                    var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Uploads/Excels", fileName);
+                    var fileLocation = new FileInfo(filePath).ToString();
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await file.CopyToAsync(stream);
+                        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+                        // đọc dữ liệu từ file Excel và đổ vào DataTable
+                        var dt = _excelProcess.ExcelToDataTable(fileLocation);
+                        // sử dụng vòng lặp for để đọc dữ liệu từ dt
+                        for (int i = 0; i < dt.Rows.Count; i++)
+                        {
+                            // tạo đối tượng Person mới
+                            var ps = new Models.Person();
+                            // gán giá trị cho các thuộc tính
+                            ps.PersonId = dt.Rows[i][0].ToString();    // cột 0: Mã nhân viên
+                            ps.FullName = dt.Rows[i][1].ToString();    // cột 1: Họ tên
+                            ps.Address = dt.Rows[i][2].ToString();     // cột 2: Địa chỉ
+                            // thêm đối tượng vào context
+                            _context.Add(ps);
+                        }
+                        // lưu các thay đổi vào cơ sở dữ liệu
+                        await _context.SaveChangesAsync();
+                        // chuyển hướng về trang Index
+                        return RedirectToAction(nameof(Index));
+
+                    }
+                }
+            }
+            return View();
+        }
         public async Task<IActionResult> Index()
         {
-             var model = await _context.Person
-        .Select(p => new MvcMovie.Models.Entities.Person
-        {
-            PersonId = p.PersonId,
-            FullName = p.FullName,
-            Address = p.Address
-        }).ToListAsync();
+            var model = await _context.Person
+       .Select(p => new MvcMovie.Models.Entities.Person
+       {
+           PersonId = p.PersonId,
+           FullName = p.FullName,
+           Address = p.Address
+       }).ToListAsync();
 
-        return View(model); // truyền đúng kiểu mà View đang chờ
+            return View(model); // truyền đúng kiểu mà View đang chờ
         }
         public async Task<IActionResult> Details(string id)
         {

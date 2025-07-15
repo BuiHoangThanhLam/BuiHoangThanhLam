@@ -31,6 +31,30 @@ namespace MVC.Migrations
 
                     b.ToTable("Person");
                 });
+             modelBuilder.Entity("MvcMovie.Models.DaiLy", d =>
+                {
+                    d.Property<string>("MaDaiLy")
+                        .HasColumnType("TEXT");
+
+                    d.Property<string>("TenDaiLy")
+                        .HasColumnType("TEXT");
+
+                    d.Property<string>("DiaChi")
+                        .HasColumnType("TEXT");
+
+                    d.Property<string>("NguoiDaiDien")
+                        .HasColumnType("TEXT");
+
+                    d.Property<string>("DienThoai")
+                        .HasColumnType("TEXT");
+
+                    d.Property<string>("MaHTPP")
+                        .HasColumnType("TEXT");
+
+                    d.HasKey("MaDaiLy");
+
+                    d.ToTable("DaiLy");
+                });    
 #pragma warning restore 612, 618
         }
     }

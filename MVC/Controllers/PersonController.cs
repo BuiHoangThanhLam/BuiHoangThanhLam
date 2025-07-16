@@ -1,11 +1,15 @@
 using System.Data;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using MvcMovie.Data;
 using MvcMovie.Models;
 using MvcMovie.Models.Entities;
 using MvcMovie.Models.Process;
+using Newtonsoft.Json.Converters;
 using OfficeOpenXml;
+using X.PagedList;
+using X.PagedList.Extensions;
 
 namespace MvcMovie.Controllers
 {
@@ -19,6 +23,7 @@ namespace MvcMovie.Controllers
         {
             _context = context;
         }
+        
         public async Task<IActionResult> Upload()
         {
             return View();
@@ -66,41 +71,32 @@ namespace MvcMovie.Controllers
             }
             return View();
         }
-        public async Task<IActionResult> Index()
+
+        [HttpGet]
+        public async Task<IActionResult> Index(int? page, int? PageSize)
         {
-            var model = await _context.Person
-       .Select(p => new MvcMovie.Models.Entities.Person
-       {
-           PersonId = p.PersonId,
-           FullName = p.FullName,
-           Address = p.Address
-       }).ToListAsync();
-
-            return View(model); // truyền đúng kiểu mà View đang chờ
-        }
-        public async Task<IActionResult> Details(string id)
-        {
-            if (id == null)
+            ViewBag.PageSize = new List<SelectListItem>()
             {
-                return NotFound();
-            }
-
-            var person = await _context.Person
-                .FirstOrDefaultAsync(m => m.PersonId == id);
-            if (person == null)
-            {
-                return NotFound();
-            }
-
-            var entityPerson = new MvcMovie.Models.Entities.Person
-            {
-                PersonId = person.PersonId,
-                FullName = person.FullName,
-                Address = person.Address
+                new SelectListItem() { Value="3", Text="3" },
+                new SelectListItem() { Value="5", Text="5" },
+                new SelectListItem() { Value="10", Text="10" },
+                new SelectListItem() { Value="15", Text="15" },
+                new SelectListItem() { Value="25", Text="25" },
+                new SelectListItem() { Value="50", Text="50" },
             };
-
-            return View(entityPerson);
+            int pagesize = (PageSize ?? 3);
+            ViewBag.psize = pagesize;
+            var model = _context.Person
+            .Select(p => new MvcMovie.Models.Entities.Person
+            {
+            PersonId = p.PersonId,
+            FullName = p.FullName,
+            Address = p.Address
+            })
+            .ToList().ToPagedList(page ?? 1, pagesize);
+            return View(model);
         }
+
         public IActionResult Create()
         {
             AutoGenerateId autoGenerateId = new AutoGenerateId();
@@ -133,11 +129,12 @@ namespace MvcMovie.Controllers
             }
             return View(person);   
         }
+        
         public IActionResult Download()
         {
             // Name the file when downloading
             var fileName = "YourFileName" + ".xlsx";
-            using(ExcelPackage excelPackage = new ExcelPackage())
+            using (ExcelPackage excelPackage = new ExcelPackage())
             {
                 ExcelWorksheet worksheet = excelPackage.Workbook.Worksheets.Add("Sheet 1");
 
@@ -216,6 +213,31 @@ namespace MvcMovie.Controllers
             }
             return View(person);
         }
+
+        public async Task<IActionResult> Details(string id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var person = await _context.Person
+                .FirstOrDefaultAsync(m => m.PersonId == id);
+            if (person == null)
+            {
+                return NotFound();
+            }
+
+            var entityPerson = new MvcMovie.Models.Entities.Person
+            {
+                PersonId = person.PersonId,
+                FullName = person.FullName,
+                Address = person.Address
+            };
+
+            return View(entityPerson);
+        }
+
         public async Task<IActionResult> Delete(string id)
         {
             if (id == null || _context.Person == null)
@@ -253,16 +275,11 @@ namespace MvcMovie.Controllers
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
+        
         private bool PersonExists(string id)
         {
             return (_context.Person?.Any(e => e.PersonId == id)).GetValueOrDefault();
         } 
-        [HttpPost]
-        public IActionResult Index(Models.Person ps)
-        {
-            string strOutput = "Xin chao " + ps.PersonId + "-" + ps.FullName + "-" + ps.Address;
-            ViewBag.infoPerson = strOutput;
-            return View();
-        }
+       
     }
 }

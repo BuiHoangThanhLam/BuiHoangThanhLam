@@ -1,4 +1,6 @@
 @model IEnumerable<MvcMovie.Models.Entities.Person>
+@using X.PagedList;
+@using X.PagedList.Mvc.Core; 
 
 @{
     ViewData["Title"] = "Index";
@@ -45,4 +47,24 @@
 }
     </tbody>
 </table>
+@using (Html.BeginForm("Index", "Person", FormMethod.Get, new {id = "form1" }))
+{
+    <div class="row">
+        <div class="col-md-11">
+            @Html.PagedListPager((IPagedList) Model, page => Url.Action("Index", new {page = page, pageSize = ViewBag.psize}), 
+            new X.PagedList.Mvc.Core.PagedListRenderOptions { LiElementClasses = new string[] {"page-item"}, 
+            PageClasses = new string[] { "page-link" }})
+        </div>
+        <div class="col-md-1">
+            @Html.DropDownList("pageSize", null, new {@class="form-select"})
+        </div>
+    </div>
+}
+<script>
+    $(document).ready(function() {
+        $("#pageSize").change(function() {
+            $("#form1").submit();
+        });
+    });
+</script>
 
